@@ -3,9 +3,6 @@ from django.contrib.auth.tokens import default_token_generator
 
 from django.http.response import HttpResponse
 from django.shortcuts import redirect, render
-
-
-
 from django.utils.http import urlsafe_base64_decode
 
 from vendor.forms import VendorForm
@@ -14,11 +11,10 @@ from .models import User, UserProfile
 from django.contrib import messages, auth
 from .utils import detectUser, send_verification_email
 from django.contrib.auth.decorators import login_required, user_passes_test
-#from django.contrib import messages
-from .utils import send_verification_email
 
-from django.template.defaultfilters import slugify
 from django.core.exceptions import PermissionDenied
+from vendor.models import Vendor
+from django.template.defaultfilters import slugify
 
 
 
@@ -126,6 +122,7 @@ def registerVendor(request):
 
     return render(request, 'accounts/registerVendor.html', context)
 
+
 def activate(request, uidb64, token):
     # Activate the user by setting the is_active status to True
     try:
@@ -142,7 +139,6 @@ def activate(request, uidb64, token):
     else:
         messages.error(request, 'Invalid activation link')
         return redirect('myAccount')
-
 
 
 def login(request):
@@ -169,15 +165,18 @@ def logout(request):
     messages.info(request, 'You are logged out.')
     return redirect('login')
 
+
 @login_required(login_url='login')
 def myAccount(request):
     user = request.user
     redirectUrl = detectUser(user)
     return redirect(redirectUrl)
 
+
 @login_required(login_url='login')
 @user_passes_test(check_role_vendor)
 def custDashboard(request):
+    
     return render(request, 'accounts/custDashboard.html')
 
 
