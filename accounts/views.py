@@ -12,6 +12,12 @@ from django.contrib import messages, auth
 from .utils import detectUser, send_verification_email
 from django.contrib.auth.decorators import login_required
 
+
+
+from django.template.defaultfilters import slugify
+
+
+
 # Create your views here.
 def registerUser(request):
     if request.user.is_authenticated:
