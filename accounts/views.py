@@ -1,8 +1,9 @@
-from django.shortcuts import redirect, render
+
+from datetime import datetime
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import message
-from .forms import UserForm
-from .models import User
+from django.http.response import HttpResponse
+from django.shortcuts import redirect, render
 from django.utils.http import urlsafe_base64_decode
 
 from vendor.forms import VendorForm
@@ -76,6 +77,53 @@ def registerUser(request):
     return render(request, 'accounts/registerUser.html', context)
 
 
+def registerVendor(request):
+    if request.user.is_authenticated:
+        messages.warning(request, 'You are already logged in!')
+        return redirect('myAccount')
+    elif request.method == 'POST':
+        # store the data and create the user
+        form = UserForm(request.POST)
+        v_form = VendorForm(request.POST, request.FILES)
+        if form.is_valid() and v_form.is_valid:
+            first_name = form.cleaned_data['first_name']
+            last_name = form.cleaned_data['last_name']
+            username = form.cleaned_data['username']
+            email = form.cleaned_data['email']
+            password = form.cleaned_data['password']
+            user = User.objects.create_user(first_name=first_name, last_name=last_name, username=username, email=email, password=password)
+            user.role = User.VENDOR
+            user.save()
+            vendor = v_form.save(commit=False)
+            vendor.user = user
+            vendor_name = v_form.cleaned_data['vendor_name']
+            vendor.vendor_slug = slugify(vendor_name)+'-'+str(user.id)
+            user_profile = UserProfile.objects.get(user=user)
+            vendor.user_profile = user_profile
+            vendor.save()
+
+            # Send verification email
+            mail_subject = 'Please activate your account'
+            email_template = 'accounts/emails/account_verification_email.html'
+            send_verification_email(request, user, mail_subject, email_template)
+
+            messages.success(request, 'Your account has been registered sucessfully! Please wait for the approval.')
+            return redirect('registerVendor')
+        else:
+            print('invalid form')
+            print(form.errors)
+    else:
+        form = UserForm()
+        v_form = VendorForm()
+
+    context = {
+        'form': form,
+        'v_form': v_form,
+    }
+
+    return render(request, 'accounts/registerVendor.html', context)
+
+
 def activate(request, uidb64, token):
     # Activate the user by setting the is_active status to True
     try:
@@ -92,7 +140,7 @@ def activate(request, uidb64, token):
     else:
         messages.error(request, 'Invalid activation link')
         return redirect('myAccount')
-    
+        
 
 def login(request):
     if request.user.is_authenticated:
@@ -125,6 +173,7 @@ def myAccount(request):
     redirectUrl = detectUser(user)
     return redirect(redirectUrl)
 
+
 @login_required(login_url='login')
 @user_passes_test(check_role_customer)
 def custDashboard(request):
@@ -136,6 +185,7 @@ def custDashboard(request):
         'recent_orders': recent_orders,
     }
     return render(request, 'accounts/custDashboard.html', context)
+
 
 @login_required(login_url='login')
 @user_passes_test(check_role_vendor)
@@ -165,6 +215,7 @@ def vendorDashboard(request):
     }
     return render(request, 'accounts/vendorDashboard.html', context)
 
+
 def forgot_password(request):
     if request.method == 'POST':
         email = request.POST['email']
@@ -183,6 +234,7 @@ def forgot_password(request):
             messages.error(request, 'Account does not exist')
             return redirect('forgot_password')
     return render(request, 'accounts/forgot_password.html')
+
 
 def reset_password_validate(request, uidb64, token):
     # validate the user by decoding the token and user pk
