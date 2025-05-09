@@ -1,11 +1,11 @@
-#import json
+import json
 from django.db import models
 from accounts.models import User
 from menu.models import FoodItem
 from vendor.models import Vendor
 
 
-#request_object = ''
+request_object = ''
 
 class Payment(models.Model):
     PAYMENT_METHOD = (

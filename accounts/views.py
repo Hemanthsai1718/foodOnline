@@ -5,20 +5,36 @@ from .forms import UserForm
 from .models import User
 from django.utils.http import urlsafe_base64_decode
 
-
-
-
+from vendor.forms import VendorForm
+from .forms import UserForm
+from .models import User, UserProfile
 from django.contrib import messages, auth
 from .utils import detectUser, send_verification_email
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, user_passes_test
 
-
-
+from django.core.exceptions import PermissionDenied
+from vendor.models import Vendor
 from django.template.defaultfilters import slugify
+from orders.models import Order
+import datetime
 
 
+# Restrict the vendor from accessing the customer page
+def check_role_vendor(user):
+    if user.role == 1:
+        return True
+    else:
+        raise PermissionDenied
 
-# Create your views here.
+
+# Restrict the customer from accessing the vendor page
+def check_role_customer(user):
+    if user.role == 2:
+        return True
+    else:
+        raise PermissionDenied
+
+
 def registerUser(request):
     if request.user.is_authenticated:
         messages.warning(request, 'You are already logged in!')
@@ -109,6 +125,45 @@ def myAccount(request):
     redirectUrl = detectUser(user)
     return redirect(redirectUrl)
 
+@login_required(login_url='login')
+@user_passes_test(check_role_customer)
+def custDashboard(request):
+    orders = Order.objects.filter(user=request.user, is_ordered=True)
+    recent_orders = orders[:5]
+    context = {
+        'orders': orders,
+        'orders_count': orders.count(),
+        'recent_orders': recent_orders,
+    }
+    return render(request, 'accounts/custDashboard.html', context)
+
+@login_required(login_url='login')
+@user_passes_test(check_role_vendor)
+def vendorDashboard(request):
+    vendor = Vendor.objects.get(user=request.user)
+    orders = Order.objects.filter(vendors__in=[vendor.id], is_ordered=True).order_by('created_at')
+    recent_orders = orders[:10]
+
+    # current month's revenue
+    current_month = datetime.datetime.now().month
+    current_month_orders = orders.filter(vendors__in=[vendor.id], created_at__month=current_month)
+    current_month_revenue = 0
+    for i in current_month_orders:
+        current_month_revenue += i.get_total_by_vendor()['grand_total']
+    
+
+    # total revenue
+    total_revenue = 0
+    for i in orders:
+        total_revenue += i.get_total_by_vendor()['grand_total']
+    context = {
+        'orders': orders,
+        'orders_count': orders.count(),
+        'recent_orders': recent_orders,
+        'total_revenue': total_revenue,
+        'current_month_revenue': current_month_revenue,
+    }
+    return render(request, 'accounts/vendorDashboard.html', context)
 
 def forgot_password(request):
     if request.method == 'POST':
