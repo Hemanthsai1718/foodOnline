@@ -12,13 +12,27 @@ from django.contrib import messages, auth
 from .utils import detectUser, send_verification_email
 from django.contrib.auth.decorators import login_required#, user_passes_test
 
-#from django.core.exceptions import PermissionDenied
+from django.core.exceptions import PermissionDenied
 #from vendor.models import Vendor
 #from django.template.defaultfilters import slugify
 #from orders.models import Order
 #import datetime
 
 # Create your views here.
+# Restrict the vendor from accessing the customer page
+def check_role_vendor(user):
+    if user.role == 1:
+        return True
+    else:
+        raise PermissionDenied 
+
+
+# Restrict the customer from accessing the vendor page
+def check_role_customer(user):
+    if user.role == 2:
+        return True
+    else:
+        raise PermissionDenied
 def registerUser(request):
     if request.user.is_authenticated:
         messages.warning(request, 'You are already logged in!')
