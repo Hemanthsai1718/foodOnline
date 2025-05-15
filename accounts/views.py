@@ -14,7 +14,7 @@ from django.contrib.auth.decorators import login_required#, user_passes_test
 
 from django.core.exceptions import PermissionDenied
 #from vendor.models import Vendor
-#from django.template.defaultfilters import slugify
+from django.template.defaultfilters import slugify
 #from orders.models import Order
 #import datetime
 

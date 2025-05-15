@@ -1,6 +1,6 @@
 from django.db import models
 from accounts.models import User, UserProfile
-from accounts.utils import send_notification
+from accounts.utils import send_notification 
 
 # Create your models here.
 class Vendor(models.Model):
