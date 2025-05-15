@@ -8,9 +8,9 @@ from django.shortcuts import redirect, render
 #from vendor.forms import VendorForm
 from .forms import UserForm
 from .models import User#, UserProfile
-from django.contrib import messages#, auth
-#from .utils import detectUser, send_verification_email
-#from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib import messages, auth
+from .utils import detectUser#, send_verification_email
+from django.contrib.auth.decorators import login_required, user_passes_test
 
 #from django.core.exceptions import PermissionDenied
 #from vendor.models import Vendor
@@ -58,3 +58,45 @@ def registerUser(request):
         'form': form,
     }
     return render(request, 'accounts/registerUser.html', context) 
+
+def registerVendor(request):
+        return render(request, 'accounts/registerUser.html')
+
+
+def login(request):
+    if request.user.is_authenticated:
+        messages.warning(request, 'You are already logged in!')
+        return redirect('myAccount')
+    elif request.method == 'POST':
+        email = request.POST['email']
+        password = request.POST['password']
+
+        user = auth.authenticate(email=email, password=password)
+
+        if user is not None:
+            auth.login(request, user)
+            messages.success(request, 'You are now logged in.')
+            return redirect('myAccount')
+        else:
+            messages.error(request, 'Invalid login credentials')
+            return redirect('login')
+    return render(request, 'accounts/login.html')
+
+def logout(request):
+    auth.logout(request)
+    messages.info(request, 'You are logged out.')
+    return redirect('login')
+
+
+@login_required(login_url='login')
+def myAccount(request):
+    user = request.user
+    redirectUrl = detectUser(user)
+    return redirect(redirectUrl)
+
+def custDashboard(request):
+    return render(request, 'accounts/custDashboard.html')
+
+def vendorDashboard(request):
+    return render(request, 'accounts/vendorDashboard.html')
+
