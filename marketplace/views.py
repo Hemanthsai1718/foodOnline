@@ -16,7 +16,7 @@ from django.contrib.gis.measure import D # ``D`` is a shortcut for ``Distance``
 from django.contrib.gis.db.models.functions import Distance
 
 from datetime import date, datetime
-from orders.forms import OrderForm 
+#from orders.forms import OrderForm 
 
 
 def marketplace(request):
