@@ -5,10 +5,10 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.db import IntegrityError
 
 from menu.forms import CategoryForm, FoodItemForm
-#from orders.models import Order, OrderedFood
+from orders.models import Order, OrderedFood
 import vendor
 from .forms import VendorForm, OpeningHourForm
-#from accounts.forms import UserProfileForm
+from accounts.forms import UserProfileForm
 
 from accounts.models import UserProfile
 from .models import OpeningHour, Vendor
