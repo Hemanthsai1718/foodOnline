@@ -17,8 +17,8 @@ def detectUser(user):
     elif user.role == None and user.is_superadmin:
         redirectUrl = '/admin'
         return redirectUrl
-    
 
+    
 def send_verification_email(request, user, mail_subject, email_template):
     from_email = settings.DEFAULT_FROM_EMAIL
     current_site = get_current_site(request)
