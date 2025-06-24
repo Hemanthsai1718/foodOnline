@@ -146,10 +146,14 @@ def add_food(request):
     if request.method == 'POST':
         form = FoodItemForm(request.POST, request.FILES)
         if form.is_valid():
+            category = form.cleaned_data['category']
             foodtitle = form.cleaned_data['food_title']
             food = form.save(commit=False)
             food.vendor = get_vendor(request)
             food.slug = slugify(foodtitle)
+            vendor = get_vendor(request)
+            vendor_id = vendor.id
+            food.slug = slugify(f"{vendor_id}-{category.id}-{foodtitle}") 
             form.save()
             messages.success(request, 'Food Item added successfully!')
             return redirect('fooditems_by_category', food.category.id)
